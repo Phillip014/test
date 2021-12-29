@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+
+<!-- Load color scale -->
+<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
+<!-- Create a div where the graph will take place -->
+<div id="my_dataviz"></div>
+
+<!-- A bit of CSS: change stroke color of circle on hover (white -> black) -->
+<style>
+    .bubbles {
+        stroke-width: 1px;
+        stroke: black;
+        opacity: .8
+    }
+    .bubbles:hover {
+        stroke: black;
+    }
+</style>
+
+<script>
+
+    // set the dimensions and margins of the graph
+    var margin = {top: 15, right: 850, bottom: 60, left: 50},
+        width = 1300 - margin.left - margin.right,
+        height = 500 - margin.top - margin.bottom;
+
+    // append the svg object to the body of the page
+    var svg = d3.select("#my_dataviz")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform",
+            "translate(" + margin.left + "," + margin.top + ")");
+
+    //Read the data
+    d3.csv("medicine_scival.csv", function(data) {
+
+        // ---------------------------//
+        //       AXIS  AND SCALE      //
+        // ---------------------------//
+
+        // Add X axis
+        var x = d3.scaleLinear()
+            .domain([0, 40])
+            .range([ 0, width]);
+        svg.append("g")
+            .attr("stroke-opacity", 0.1)
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x).ticks(20).tickPadding([10]).tickSizeInner(-height));
+
+        // Add X axis label:
+        svg.append("text")
+            .attr("text-anchor", "end")
+            .attr("x", width)
+            .attr("y", height+50 )
+            .text("fwci_2020");
+
+        // Add Y axis
+        var y = d3.scaleLinear()
+            .domain([0, 100])
+            .range([ height, 0]);
+        svg.append("g")
+            .attr("stroke-opacity", 0.1)
+            .call(d3.axisLeft(y).ticks(20).tickPadding([10]).tickSizeInner(-width));
+
+        // Add Y axis label:
+        svg.append("text")
+            .attr("text-anchor", "end")
+            .attr("x", 0)
+            .attr("y",  45)
+            .text("oitjp_10_2020")
+            .attr("text-anchor", "start")
+            .attr('transform', 'rotate(90)')
+
+
+        //my scale
+        var myscale_blue = d3.scaleLinear().domain([0,100]).range([height,0])
+        var myscale_red = d3.scaleLinear().domain([0,40]).range([0,width])
+        //blue line
+        svg.append("line")          // attach a line
+            .style("stroke", "blue")  // colour the line
+            .style("stroke-width",3)
+            .style("stroke-dasharray", (10, 10))
+            .style("opacity", 0.5)
+            .attr("x1", 0)     // x position of the first end of the line
+            .attr("y1", myscale_blue(27.14))      // y position of the first end of the line
+            .attr("x2", width)     // x position of the second end of the line
+            .attr("y2", myscale_blue(27.14));
+
+        svg.append("text")
+            .style("stroke", "blue")  // colour the line
+            .attr("x",width)
+            .attr("y", myscale_blue(27.14))
+            .style('font-weight', 500)
+            .style('font-family', 'Arial')
+            .style('fill', 'red')
+            .text("27.14");
+
+        //red line
+        svg.append("line")          // attach a line
+            .style("stroke", "red")  // colour the line
+            .attr("x1", myscale_red(8.80))     // x position of the first end of the line
+            .attr("y1", 0)      // y position of the first end of the line
+            .attr("x2", myscale_red(8.80))     // x position of the second end of the line
+            .attr("y2", height)
+            .style("stroke-width",3)
+            .style("opacity", 0.5)
+            .style("stroke-dasharray", (10,10))
+            .text("70");
+
+        svg.append("text")
+            .style("stroke", "red")  // colour the line
+            .attr("x", myscale_red(8.80)+10)
+            .attr("y",-3)
+            .style('font-weight', 500)
+            .style('font-family', 'Arial')
+            .attr("y2", width)
+            .text("8.80");
+
+
+        // Add a scale for bubble size
+        var z = d3.scaleSqrt()
+            .domain([0, 50])
+            .range([ 0, 20]);
+
+        // Add a scale for bubble color
+        var myColor = d3.scaleOrdinal()
+            .domain(["Department of Anaesthesiology",
+                "Department of Clinical Oncology",
+                "Department of Diagnostic Radiology",
+                "Department of Family Medicine and Primary Care",
+                "Department of Medicine",
+                "Department of Microbiology",
+                "Department of Obstetrics and Gynaecology",
+                // "Department of Orthopaedics & Traumatology",
+                "Department of Paediatrics and Adolescent Medicine",
+                "Department of Pathology",
+                "Department of Pharmacology",
+                "Department of Psychiatry",
+                "Department of Surgery",
+                "Dept of Ophthalmology",
+                "Institute of Medical and Health Sciences Education",
+                "Li Ka Shing Faculty of Medicine",
+                "School of Biomedical Sciences",
+                "School of Chinese Medicine",
+                "School of Nursing",
+                "School of Public Health"])
+            .range(d3.schemeSet1);
+
+
+        // ---------------------------//
+        //      TOOLTIP               //
+        // ---------------------------//
+
+        // -1- Create a tooltip div that is hidden by default:
+        var tooltip = d3.select("#my_dataviz")
+            .append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0)
+            .style('position', 'absolute')
+            .style("background-color", "black")
+            .style("border-radius", "100px")
+            .style("padding", "10px")
+            .style("color", "white")
+
+        // -2- Create 3 functions to show / update (when mouse move but stay on same circle) / hide the tooltip
+        var showTooltip = function(d) {
+            tooltip
+                .transition()
+                .duration(200)
+            tooltip
+                .style("opacity", 0.8)
+                .html("department: " + d.department)
+                .style("left", (d3.mouse(this)[0]+30) + "px")
+                .style("top", (d3.mouse(this)[1]+30) + "px")
+        }
+        var moveTooltip = function(d) {
+            tooltip
+                .style("left", (d3.mouse(this)[0]+30) + "px")
+                .style("top", (d3.mouse(this)[1]+30) + "px")
+        }
+        var hideTooltip = function(d) {
+            tooltip
+                .transition()
+                .duration(200)
+                .style("opacity", 0)
+        }
+
+
+        // ---------------------------//
+        //       HIGHLIGHT GROUP      //
+        // ---------------------------//
+
+        // What to do when one group is hovered
+        var highlight = function(d){
+            // reduce opacity of all groups
+            d3.selectAll(".bubbles").style("opacity", .05)
+            // expect the one that is hovered
+            d3.selectAll("."+d).style("opacity", 1)
+        }
+
+        // And when it is not hovered anymore
+        var noHighlight = function(d){
+            d3.selectAll(".bubbles").style("opacity", 1)
+        }
+
+
+        // ---------------------------//
+        //       CIRCLES              //
+        // ---------------------------//
+
+        // Add dots
+        svg.append('g')
+            .selectAll("dot")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("class", function(d) { return "bubbles " + d.department})
+            .attr("cx", function (d) { return x(d.fwci_2021); } )
+            .attr("cy", function (d) { return y(d.oitjp_10_2020); } )
+            .attr("r", function (d) { return z(d.pub_2020); } )
+            .style("fill", function (d) { return myColor(d.department); } )
+            // -3- Trigger the functions for hover
+            .on("mouseover", showTooltip )
+            .on("mousemove", moveTooltip )
+            .on("mouseleave", hideTooltip )
+
+
+
+        // ---------------------------//
+        //       LEGEND              //
+        // ---------------------------//
+
+        // Add legend: circles
+        // var valuesToShow = [100, 60, 10]
+        // var xCircle = 900
+        // var xLabel = 440
+        // svg
+        //     .selectAll("legend")
+        //     .data(valuesToShow)
+        //     .enter()
+        //     .append("circle")
+        //     .attr("cx", xCircle)
+        //     .attr("cy", function(d){ return height - 100 - z(d) } )
+        //     .attr("r", function(d){ return z(d) })
+        //     .style("fill", "none")
+        //     .attr("stroke", "black")
+        //
+        // // Add legend: segments
+        // svg
+        //     .selectAll("legend")
+        //     .data(valuesToShow)
+        //     .enter()
+        //     .append("line")
+        //     .attr('x1', function(d){ return xCircle + z(d) } )
+        //     .attr('x2',  850)
+        //     .attr('y1', function(d){ return height - 100 - z(d) } )
+        //     .attr('y2', function(d){ return height - 100 - z(d) } )
+        //     .attr('stroke', 'black')
+        //     .style('stroke-dasharray', ('2,2'))
+
+        // // Add legend: labels
+        // svg
+        //     .selectAll("legend")
+        //     .data(valuesToShow)
+        //     .enter()
+        //     .append("text")
+        //     .attr('x', 830 )
+        //     .attr('y', function(d){ return height - 100 - z(d) } )
+        //     .text( function(d){ return d/10 } )
+        //     .style("font-size", 10)
+        //     .attr('alignment-baseline', 'middle')
+
+        // // Legend title
+        // svg.append("text")
+        //     .attr('x', xCircle)
+        //     .attr("y", height - 100 +30)
+        //     .text("haha")
+        //     .attr("text-anchor", "middle")
+
+        // Add one dot in the legend for each name.
+        var size = 18
+        var allgroups =
+            ["Department of Anaesthesiology",
+            "Department of Clinical Oncology",
+            "Department of Diagnostic Radiology",
+            "Department of Family Medicine and Primary Care",
+            "Department of Medicine",
+            "Department of Microbiology",
+            "Department of Obstetrics and Gynaecology",
+            // "Department of Orthopaedics & Traumatology",
+            "Department of Paediatrics and Adolescent Medicine",
+            "Department of Pathology",
+            "Department of Pharmacology",
+            "Department of Psychiatry",
+            "Department of Surgery",
+            "Dept of Ophthalmology",
+            "Institute of Medical and Health Sciences Education",
+            "Li Ka Shing Faculty of Medicine",
+            "School of Biomedical Sciences",
+            "School of Chinese Medicine",
+            "School of Nursing",
+            "School of Public Health"]
+
+        svg.selectAll("myrect")
+            .data(allgroups)
+            .enter()
+            .append("circle")
+            .attr("cx", 850)
+            .attr("cy", function(d,i){ return 10 + i*(size+5)}) // 100 is where the first dot appears. 25 is the distance between dots
+            .attr("r", 7)
+            .style("fill", function(d){ return myColor(d)})
+            .on("mouseover", highlight)
+            .on("mouseleave", noHighlight)
+
+        // Add labels beside legend dots
+        svg.selectAll("mylabels")
+            .data(allgroups)
+            .enter()
+            .append("text")
+            .attr("x", 850 + size*.8)
+            .attr("y", function(d,i){ return i * (size + 5) + (size/2)}) // 100 is where the first dot appears. 25 is the distance between dots
+            .style("fill", function(d){ return myColor(d)})
+            .text(function(d){ return d})
+            .attr("text-anchor", "left")
+            .style("alignment-baseline", "middle")
+            .on("mouseover", highlight)
+            .on("mouseleave", noHighlight)
+    })
+</script>
