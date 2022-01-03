@@ -25,7 +25,7 @@
 <script>
 
     // set the dimensions and margins of the graph
-    var margin = {top: 15, right: 850, bottom: 60, left: 50},
+    var margin = {top: 18, right: 750, bottom: 50, left: 50},
         width = 1300 - margin.left - margin.right,
         height = 500 - margin.top - margin.bottom;
 
@@ -39,15 +39,31 @@
             "translate(" + margin.left + "," + margin.top + ")");
 
     //Read the data
-    d3.csv("medicine_scival.csv", function(data) {
+    var fwci_2020=[];
+    var oitjp_10_2020 =[];
 
+    d3.csv("medicine_scival_test.csv",function(csv){
+        //executed after successful loading of data
+        csv.map(function(d){
+            fwci_2020.push(d.fwci_2020);
+            oitjp_10_2020.push(d.oitjp_10_2020);
+        })
+    });
+    console.log("fwci_2020",fwci_2020);
+    console.log("oitjp_10_2020",oitjp_10_2020);
+
+
+
+
+    d3.csv("medicine_scival.csv", function(data) {
         // ---------------------------//
         //       AXIS  AND SCALE      //
         // ---------------------------//
 
+
         // Add X axis
         var x = d3.scaleLinear()
-            .domain([0, 40])
+            .domain([0, 110])
             .range([ 0, width]);
         svg.append("g")
             .attr("stroke-opacity", 0.1)
@@ -63,7 +79,7 @@
 
         // Add Y axis
         var y = d3.scaleLinear()
-            .domain([0, 100])
+            .domain([0, 110])
             .range([ height, 0]);
         svg.append("g")
             .attr("stroke-opacity", 0.1)
@@ -79,9 +95,15 @@
             .attr('transform', 'rotate(90)')
 
 
-        //my scale
-        var myscale_blue = d3.scaleLinear().domain([0,100]).range([height,0])
-        var myscale_red = d3.scaleLinear().domain([0,40]).range([0,width])
+        //my scale: blue and green are the same in scale; yellow and red are the same
+        var myscale_blue = d3.scaleLinear().domain([0,110]).range([height,0])
+        var myscale_red = d3.scaleLinear().domain([0,110]).range([0,width])
+
+
+
+
+
+
         //blue line
         svg.append("line")          // attach a line
             .style("stroke", "blue")  // colour the line
@@ -89,69 +111,136 @@
             .style("stroke-dasharray", (10, 10))
             .style("opacity", 0.5)
             .attr("x1", 0)     // x position of the first end of the line
-            .attr("y1", myscale_blue(27.14))      // y position of the first end of the line
+            .attr("y1", myscale_blue(d3.mean(oitjp_10_2020)))      // y position of the first end of the line
             .attr("x2", width)     // x position of the second end of the line
-            .attr("y2", myscale_blue(27.14));
+            .attr("y2", myscale_blue(d3.mean(oitjp_10_2020)));
 
         svg.append("text")
             .style("stroke", "blue")  // colour the line
             .attr("x",width)
-            .attr("y", myscale_blue(27.14))
+            .attr("y", myscale_blue(d3.mean(oitjp_10_2020)))
             .style('font-weight', 500)
             .style('font-family', 'Arial')
-            .style('fill', 'red')
-            .text("27.14");
+            .style('fill', 'blue')
+            .text(d3.mean(oitjp_10_2020).toFixed(2));
 
         //red line
         svg.append("line")          // attach a line
             .style("stroke", "red")  // colour the line
-            .attr("x1", myscale_red(8.80))     // x position of the first end of the line
+            .attr("x1", myscale_red(d3.mean(fwci_2020)))     // x position of the first end of the line
             .attr("y1", 0)      // y position of the first end of the line
-            .attr("x2", myscale_red(8.80))     // x position of the second end of the line
+            .attr("x2", myscale_red(d3.mean(fwci_2020)))     // x position of the second end of the line
             .attr("y2", height)
             .style("stroke-width",3)
             .style("opacity", 0.5)
             .style("stroke-dasharray", (10,10))
-            .text("70");
 
         svg.append("text")
-            .style("stroke", "red")  // colour the line
+            .style("stroke", "red")  // colour the text
+            .style('fill', 'red')
             .attr("x", myscale_red(8.80)+10)
             .attr("y",-3)
             .style('font-weight', 500)
             .style('font-family', 'Arial')
             .attr("y2", width)
-            .text("8.80");
+            .text(d3.mean(fwci_2020).toFixed(2));
+
+        //brown line
+        svg.append("line")          // attach a line
+            .style("stroke", "brown")  // colour the line
+            .attr("x1", myscale_red(d3.median(fwci_2020)))     // x position of the first end of the line
+            .attr("y1", 0)      // y position of the first end of the line
+            .attr("x2", myscale_red(d3.median(fwci_2020)))     // x position of the second end of the line
+            .attr("y2", height)
+            .style("stroke-width",3)
+            .style("opacity", 0.5)
+            .style("stroke-dasharray", (10,10))
+
+        svg.append("text")
+            .style("stroke", "brown")  // colour the line
+            .style('fill', 'brown')
+            .attr("x", myscale_red(d3.median(fwci_2020)))
+            .attr("y",-3)
+            .style('font-weight', 500)
+            .style('font-family', 'Arial')
+            .attr("y2", width)
+            .text(d3.median(fwci_2020).toFixed(2))
+
+
+
+        //green line
+        svg.append("line")          // attach a line
+            .style("stroke", "green")  // colour the line
+            .style("stroke-width",3)
+            .style("stroke-dasharray", (10, 10))
+            .style("opacity", 0.5)
+            .attr("x1", 0)     // x position of the first end of the line
+            .attr("y1", myscale_blue(d3.median(oitjp_10_2020)))      // y position of the first end of the line
+            .attr("x2", width)     // x position of the second end of the line
+            .attr("y2", myscale_blue(d3.median(oitjp_10_2020)));
+
+        svg.append("text")
+            .style("stroke", "green")  // colour the line
+            .attr("x",width)
+            .attr("y", myscale_blue(d3.median(oitjp_10_2020))+10)
+            .style('font-weight', 500)
+            .style('font-family', 'Arial')
+            .style('fill', 'green')
+            .text(d3.median(oitjp_10_2020).toFixed(2));
+
+
+
+
+
+
+
+
+
+
+
 
 
         // Add a scale for bubble size
         var z = d3.scaleSqrt()
             .domain([0, 50])
-            .range([ 0, 20]);
+            .range([ 0, 15]);
 
+
+
+
+        //random color
+        var color = [];
+        for(i=0;i<1000;i++){
+            var letters = '0123456789ABCDEF'.split('');
+            var randcolor = '#';
+            for (var j = 0; j < 6; j++ ) {
+                randcolor += letters[Math.round(Math.random() * 15)];
+            }
+            color[i]= randcolor;
+        }
         // Add a scale for bubble color
         var myColor = d3.scaleOrdinal()
-            .domain(["Department of Anaesthesiology",
-                "Department of Clinical Oncology",
-                "Department of Diagnostic Radiology",
-                "Department of Family Medicine and Primary Care",
-                "Department of Medicine",
-                "Department of Microbiology",
-                "Department of Obstetrics and Gynaecology",
-                // "Department of Orthopaedics & Traumatology",
-                "Department of Paediatrics and Adolescent Medicine",
-                "Department of Pathology",
-                "Department of Pharmacology",
-                "Department of Psychiatry",
-                "Department of Surgery",
-                "Dept of Ophthalmology",
-                "Institute of Medical and Health Sciences Education",
-                "Li Ka Shing Faculty of Medicine",
-                "School of Biomedical Sciences",
-                "School of Chinese Medicine",
-                "School of Nursing",
-                "School of Public Health"])
-            .range(d3.schemeSet1);
+            .domain(["Department_of_Anaesthesiology",
+                "Department_of_Clinical_Oncology",
+                "Department_of_Diagnostic_Radiology",
+                "Department_of_Family_Medicine_and_Primary_Care",
+                "Department_of_Medicine",
+                "Department_of_Microbiology",
+                "Department_of_Obstetrics_and_Gynaecology",
+                "Department_of_Orthopaedics_and_Traumatology",
+                "Department_of_Paediatrics_and_Adolescent_Medicine",
+                "Department_of_Pathology",
+                "Department_of_Pharmacology",
+                "Department_of_Psychiatry",
+                "Department_of_Surgery",
+                "Dept_of_Ophthalmology",
+                "Institute_of_Medical_and_Health_Sciences_Education",
+                "Li_Ka_Shing_Faculty_of_Medicine",
+                "School_of_Biomedical_Sciences",
+                "School_of_Chinese_Medicine",
+                "School_of_Nursing",
+                "School_of_Public_Health"])
+            .range(color);
 
 
         // ---------------------------//
@@ -211,6 +300,10 @@
         }
 
 
+
+
+
+
         // ---------------------------//
         //       CIRCLES              //
         // ---------------------------//
@@ -222,7 +315,7 @@
             .enter()
             .append("circle")
             .attr("class", function(d) { return "bubbles " + d.department})
-            .attr("cx", function (d) { return x(d.fwci_2021); } )
+            .attr("cx", function (d) { return x(d.fwci_2020); } )
             .attr("cy", function (d) { return y(d.oitjp_10_2020); } )
             .attr("r", function (d) { return z(d.pub_2020); } )
             .style("fill", function (d) { return myColor(d.department); } )
@@ -232,87 +325,35 @@
             .on("mouseleave", hideTooltip )
 
 
-
-        // ---------------------------//
-        //       LEGEND              //
-        // ---------------------------//
-
-        // Add legend: circles
-        // var valuesToShow = [100, 60, 10]
-        // var xCircle = 900
-        // var xLabel = 440
-        // svg
-        //     .selectAll("legend")
-        //     .data(valuesToShow)
-        //     .enter()
-        //     .append("circle")
-        //     .attr("cx", xCircle)
-        //     .attr("cy", function(d){ return height - 100 - z(d) } )
-        //     .attr("r", function(d){ return z(d) })
-        //     .style("fill", "none")
-        //     .attr("stroke", "black")
-        //
-        // // Add legend: segments
-        // svg
-        //     .selectAll("legend")
-        //     .data(valuesToShow)
-        //     .enter()
-        //     .append("line")
-        //     .attr('x1', function(d){ return xCircle + z(d) } )
-        //     .attr('x2',  850)
-        //     .attr('y1', function(d){ return height - 100 - z(d) } )
-        //     .attr('y2', function(d){ return height - 100 - z(d) } )
-        //     .attr('stroke', 'black')
-        //     .style('stroke-dasharray', ('2,2'))
-
-        // // Add legend: labels
-        // svg
-        //     .selectAll("legend")
-        //     .data(valuesToShow)
-        //     .enter()
-        //     .append("text")
-        //     .attr('x', 830 )
-        //     .attr('y', function(d){ return height - 100 - z(d) } )
-        //     .text( function(d){ return d/10 } )
-        //     .style("font-size", 10)
-        //     .attr('alignment-baseline', 'middle')
-
-        // // Legend title
-        // svg.append("text")
-        //     .attr('x', xCircle)
-        //     .attr("y", height - 100 +30)
-        //     .text("haha")
-        //     .attr("text-anchor", "middle")
-
         // Add one dot in the legend for each name.
         var size = 18
         var allgroups =
-            ["Department of Anaesthesiology",
-            "Department of Clinical Oncology",
-            "Department of Diagnostic Radiology",
-            "Department of Family Medicine and Primary Care",
-            "Department of Medicine",
-            "Department of Microbiology",
-            "Department of Obstetrics and Gynaecology",
-            // "Department of Orthopaedics & Traumatology",
-            "Department of Paediatrics and Adolescent Medicine",
-            "Department of Pathology",
-            "Department of Pharmacology",
-            "Department of Psychiatry",
-            "Department of Surgery",
-            "Dept of Ophthalmology",
-            "Institute of Medical and Health Sciences Education",
-            "Li Ka Shing Faculty of Medicine",
-            "School of Biomedical Sciences",
-            "School of Chinese Medicine",
-            "School of Nursing",
-            "School of Public Health"]
+            ["Department_of_Anaesthesiology",
+                "Department_of_Clinical_Oncology",
+                "Department_of_Diagnostic_Radiology",
+                "Department_of_Family_Medicine_and_Primary_Care",
+                "Department_of_Medicine",
+                "Department_of_Microbiology",
+                "Department_of_Obstetrics_and_Gynaecology",
+                "Department_of_Orthopaedics_and_Traumatology",
+                "Department_of_Paediatrics_and_Adolescent_Medicine",
+                "Department_of_Pathology",
+                "Department_of_Pharmacology",
+                "Department_of_Psychiatry",
+                "Department_of_Surgery",
+                "Dept_of_Ophthalmology",
+                "Institute_of_Medical_and_Health_Sciences_Education",
+                "Li_Ka_Shing_Faculty_of_Medicine",
+                "School_of_Biomedical_Sciences",
+                "School_of_Chinese_Medicine",
+                "School_of_Nursing",
+                "School_of_Public_Health"]
 
         svg.selectAll("myrect")
             .data(allgroups)
             .enter()
             .append("circle")
-            .attr("cx", 850)
+            .attr("cx", 650)
             .attr("cy", function(d,i){ return 10 + i*(size+5)}) // 100 is where the first dot appears. 25 is the distance between dots
             .attr("r", 7)
             .style("fill", function(d){ return myColor(d)})
@@ -324,7 +365,7 @@
             .data(allgroups)
             .enter()
             .append("text")
-            .attr("x", 850 + size*.8)
+            .attr("x", 650 + size*.8)
             .attr("y", function(d,i){ return i * (size + 5) + (size/2)}) // 100 is where the first dot appears. 25 is the distance between dots
             .style("fill", function(d){ return myColor(d)})
             .text(function(d){ return d})
@@ -332,5 +373,12 @@
             .style("alignment-baseline", "middle")
             .on("mouseover", highlight)
             .on("mouseleave", noHighlight)
-    })
+
+
+
+
+    });
+
+
+
 </script>
