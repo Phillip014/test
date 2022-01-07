@@ -295,13 +295,12 @@
         var tooltip = d3.select("#dataviz_axisZoom")
             .append("div")
             .attr("class", "tooltip")
-            .style("opacity", 0)
+            .style("opacity", 0.3)
             .style('position', 'absolute')
             .style("background-color", "black")
-            .style("border-radius", "100px")
+            .style("border-radius", "10px")
             .style("padding", "10px")
             .style("color", "white")
-
 
         // -2- Create 3 functions to show / update (when mouse move but stay on same circle) / hide the tooltip
         var showTooltip = function(d) {
@@ -310,16 +309,22 @@
                 .duration(200)
             tooltip
                 .style("opacity", 0.8)
-                .html("department: " + d.department)
-                .style("left", (d3.mouse(this)[0]+100) + "px")
-                .style("top", (d3.mouse(this)[1]+30) + "px")
+                .html("title: " + d.title
+                    + "<br/>" + "fwci_2020: " +d.fwci_2020
+                    + "<br/>" + "oitjp_10_2020: " +d.oitjp_10_2020
+                    + "<br/>" + "pub_2020: " +d.pub_2020
+                )
+                .style("left", (d3.mouse(this)[0] + 30) + "px")
+                .style("top", (d3.mouse(this)[1] + 30) + "px")
         }
+
 
         var moveTooltip = function(d) {
             tooltip
                 .style("left", (d3.mouse(this)[0]+30) + "px")
                 .style("top", (d3.mouse(this)[1]+30) + "px")
         }
+
         var hideTooltip = function(d) {
             tooltip
                 .transition()
@@ -346,9 +351,12 @@
             .style("fill", function (d) { return myColor(d.department);})
             .style("opacity", 1)
             // -3- Trigger the functions for hover
-            .on("mouseover", showTooltip )
-            .on("mousemove", moveTooltip )
-            .on("mouseleave", hideTooltip )
+            .on("mouseover", showTooltip)
+
+            .on("mousemove", moveTooltip)
+
+            .on("mouseleave", hideTooltip)
+
 
 
 
